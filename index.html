@@ -1,0 +1,564 @@
+<html lang="zh-CN"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🐰 疯狂动物城·拔河对战（终极判题修复版）🦊</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&amp;display=swap" rel="stylesheet">
+    <style>body { margin: 0; }</style><style>
+        * { box-sizing: border-box; user-select: none; }
+        body { font-family: 'Inter', sans-serif; background-color: #e0f2fe; height: 100vh; width: 100vw; margin: 0; display: flex; flex-direction: column; overflow: hidden; }
+        .admin-bar { background: rgba(255,255,255,0.95); backdrop-filter: blur(12px); border-bottom: 2px solid #bae6fd; z-index: 100; flex-shrink: 0; }
+        .choice-btn { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
+        .choice-btn:active { transform: scale(0.97); }
+        .battlefield { position: relative; width: 100%; display: flex; justify-content: center; align-items: center; overflow: visible; }
+        .rope-container { transition: transform 0.5s cubic-bezier(0.2, 0.9, 0.4, 1.1); display: flex; align-items: center; justify-content: center; position: relative; z-index: 10; overflow: visible; gap: 0; }
+        .rope { height: 22px; background: #795548; background-image: linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent); background-size: 24px 24px; border-radius: 40px; box-shadow: 0 6px 12px rgba(0,0,0,0.25); border: 3px solid #3e2723; width: 380px; flex-shrink: 0; position: relative; }
+        .fixed-center-dash { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 6px; height: 300px; background: repeating-linear-gradient(to bottom, #64748b 0px, #64748b 12px, transparent 12px, transparent 24px); z-index: 15; pointer-events: none; opacity: 0.7; }
+        .rope-marker { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 20; pointer-events: none; }
+        .rope-marker > div { width: 12px; height: 110px; background: linear-gradient(to bottom, #fde047, #f59e0b); border: 4px solid white; border-radius: 20px; }
+        @keyframes pull-feedback { 0% { transform: scale(1) rotate(0deg); } 50% { transform: scale(1.05) rotate(-2deg); } 100% { transform: scale(1) rotate(0deg); } }
+        .pull-anim { animation: pull-feedback 0.3s ease-out; }
+        .character { transition: all 0.4s cubic-bezier(0.34, 1.2, 0.64, 1); filter: drop-shadow(0 12px 18px rgba(0,0,0,0.2)); flex-shrink: 0; width: 140px; display: flex; justify-content: center; align-items: center; }
+        .character svg { width: 130px; height: auto; pointer-events: none; }
+        .modal-overlay { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(10px); display: none; position: fixed; inset: 0; z-index: 1000; align-items: center; justify-content: center; }
+        @keyframes float { 0%, 100% { transform: translateY(0) rotate(var(--base-rot)); } 50% { transform: translateY(-8px) rotate(var(--base-rot)); } }
+        .idle-float { animation: float 4s infinite ease-in-out; }
+        .table-wrapper { max-height: 400px; overflow-y: auto; border-radius: 20px; border: 2px solid #e2e8f0; }
+        .edit-table th { background: #f8fafc; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #334155; }
+        .batch-panel { background: #fefce8; border-radius: 1.5rem; padding: 1rem; margin-bottom: 1rem; border: 2px solid #fde047; }
+        .password-eye { cursor: pointer; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); user-select: none; }
+        .lock-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 10000; display: flex; align-items: center; justify-content: center; flex-direction: column; color: white; backdrop-filter: blur(12px); }
+        .disabled-btn { opacity: 0.6; pointer-events: none; filter: grayscale(0.1); }
+        .random-order-hint { font-size: 0.7rem; color: #94a3b8; margin-top: 4px; text-align: center; }
+    </style>
+<style>*, ::before, ::after{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/* ! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com */*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}::after,::before{--tw-content:''}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.absolute{position:absolute}.relative{position:relative}.sticky{position:sticky}.inset-0{inset:0px}.top-0{top:0px}.z-50{z-index:50}.mx-4{margin-left:1rem;margin-right:1rem}.mx-auto{margin-left:auto;margin-right:auto}.mb-2{margin-bottom:0.5rem}.mb-3{margin-bottom:0.75rem}.mb-4{margin-bottom:1rem}.mb-6{margin-bottom:1.5rem}.ml-1{margin-left:0.25rem}.mt-3{margin-top:0.75rem}.mt-4{margin-top:1rem}.mt-5{margin-top:1.25rem}.mt-6{margin-top:1.5rem}.flex{display:flex}.grid{display:grid}.hidden{display:none}.max-h-72{max-height:18rem}.min-h-\[140px\]{min-height:140px}.w-1\/4{width:25%}.w-12{width:3rem}.w-80{width:20rem}.w-96{width:24rem}.w-full{width:100%}.max-w-4xl{max-width:56rem}.max-w-6xl{max-width:72rem}.max-w-7xl{max-width:80rem}.flex-1{flex:1 1 0%}.flex-grow{flex-grow:1}.border-collapse{border-collapse:collapse}.cursor-not-allowed{cursor:not-allowed}.grid-cols-1{grid-template-columns:repeat(1, minmax(0, 1fr))}.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}.items-center{align-items:center}.justify-end{justify-content:flex-end}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-2{gap:0.5rem}.gap-2\.5{gap:0.625rem}.gap-3{gap:0.75rem}.gap-4{gap:1rem}.space-y-2 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.5rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.5rem * var(--tw-space-y-reverse))}.overflow-auto{overflow:auto}.overflow-hidden{overflow:hidden}.rounded-2xl{border-radius:1rem}.rounded-3xl{border-radius:1.5rem}.rounded-\[2\.5rem\]{border-radius:2.5rem}.rounded-full{border-radius:9999px}.rounded-xl{border-radius:0.75rem}.border{border-width:1px}.border-2{border-width:2px}.border-4{border-width:4px}.border-b-8{border-bottom-width:8px}.border-l-4{border-left-width:4px}.border-r-4{border-right-width:4px}.border-b{border-bottom-width:1px}.border-b-4{border-bottom-width:4px}.border-blue-100{--tw-border-opacity:1;border-color:rgb(219 234 254 / var(--tw-border-opacity, 1))}.border-blue-200{--tw-border-opacity:1;border-color:rgb(191 219 254 / var(--tw-border-opacity, 1))}.border-blue-200\/60{border-color:rgb(191 219 254 / 0.6)}.border-blue-300{--tw-border-opacity:1;border-color:rgb(147 197 253 / var(--tw-border-opacity, 1))}.border-emerald-200{--tw-border-opacity:1;border-color:rgb(167 243 208 / var(--tw-border-opacity, 1))}.border-indigo-200{--tw-border-opacity:1;border-color:rgb(199 210 254 / var(--tw-border-opacity, 1))}.border-orange-100{--tw-border-opacity:1;border-color:rgb(255 237 213 / var(--tw-border-opacity, 1))}.border-orange-200\/60{border-color:rgb(254 215 170 / 0.6)}.border-orange-300{--tw-border-opacity:1;border-color:rgb(253 186 116 / var(--tw-border-opacity, 1))}.border-purple-200{--tw-border-opacity:1;border-color:rgb(233 213 255 / var(--tw-border-opacity, 1))}.border-slate-100{--tw-border-opacity:1;border-color:rgb(241 245 249 / var(--tw-border-opacity, 1))}.border-slate-200{--tw-border-opacity:1;border-color:rgb(226 232 240 / var(--tw-border-opacity, 1))}.border-blue-700{--tw-border-opacity:1;border-color:rgb(29 78 216 / var(--tw-border-opacity, 1))}.bg-amber-100{--tw-bg-opacity:1;background-color:rgb(254 243 199 / var(--tw-bg-opacity, 1))}.bg-blue-50{--tw-bg-opacity:1;background-color:rgb(239 246 255 / var(--tw-bg-opacity, 1))}.bg-blue-600{--tw-bg-opacity:1;background-color:rgb(37 99 235 / var(--tw-bg-opacity, 1))}.bg-blue-700{--tw-bg-opacity:1;background-color:rgb(29 78 216 / var(--tw-bg-opacity, 1))}.bg-emerald-600{--tw-bg-opacity:1;background-color:rgb(5 150 105 / var(--tw-bg-opacity, 1))}.bg-gray-200{--tw-bg-opacity:1;background-color:rgb(229 231 235 / var(--tw-bg-opacity, 1))}.bg-green-500{--tw-bg-opacity:1;background-color:rgb(34 197 94 / var(--tw-bg-opacity, 1))}.bg-indigo-500{--tw-bg-opacity:1;background-color:rgb(99 102 241 / var(--tw-bg-opacity, 1))}.bg-indigo-600{--tw-bg-opacity:1;background-color:rgb(79 70 229 / var(--tw-bg-opacity, 1))}.bg-orange-50{--tw-bg-opacity:1;background-color:rgb(255 247 237 / var(--tw-bg-opacity, 1))}.bg-orange-500{--tw-bg-opacity:1;background-color:rgb(249 115 22 / var(--tw-bg-opacity, 1))}.bg-orange-600{--tw-bg-opacity:1;background-color:rgb(234 88 12 / var(--tw-bg-opacity, 1))}.bg-purple-600{--tw-bg-opacity:1;background-color:rgb(147 51 234 / var(--tw-bg-opacity, 1))}.bg-slate-100{--tw-bg-opacity:1;background-color:rgb(241 245 249 / var(--tw-bg-opacity, 1))}.bg-slate-50{--tw-bg-opacity:1;background-color:rgb(248 250 252 / var(--tw-bg-opacity, 1))}.bg-slate-800{--tw-bg-opacity:1;background-color:rgb(30 41 59 / var(--tw-bg-opacity, 1))}.bg-slate-900{--tw-bg-opacity:1;background-color:rgb(15 23 42 / var(--tw-bg-opacity, 1))}.bg-slate-900\/90{background-color:rgb(15 23 42 / 0.9)}.bg-white{--tw-bg-opacity:1;background-color:rgb(255 255 255 / var(--tw-bg-opacity, 1))}.bg-white\/90{background-color:rgb(255 255 255 / 0.9)}.bg-blue-500{--tw-bg-opacity:1;background-color:rgb(59 130 246 / var(--tw-bg-opacity, 1))}.bg-gradient-to-b{background-image:linear-gradient(to bottom, var(--tw-gradient-stops))}.from-blue-50{--tw-gradient-from:#eff6ff var(--tw-gradient-from-position);--tw-gradient-to:rgb(239 246 255 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.from-orange-50{--tw-gradient-from:#fff7ed var(--tw-gradient-from-position);--tw-gradient-to:rgb(255 247 237 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.from-sky-50{--tw-gradient-from:#f0f9ff var(--tw-gradient-from-position);--tw-gradient-to:rgb(240 249 255 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.via-white{--tw-gradient-to:rgb(255 255 255 / 0)  var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), #fff var(--tw-gradient-via-position), var(--tw-gradient-to)}.to-amber-50\/30{--tw-gradient-to:rgb(255 251 235 / 0.3) var(--tw-gradient-to-position)}.to-white{--tw-gradient-to:#fff var(--tw-gradient-to-position)}.p-2{padding:0.5rem}.p-3{padding:0.75rem}.p-4{padding:1rem}.p-5{padding:1.25rem}.p-6{padding:1.5rem}.p-8{padding:2rem}.p-3\.5{padding:0.875rem}.px-10{padding-left:2.5rem;padding-right:2.5rem}.px-12{padding-left:3rem;padding-right:3rem}.px-3{padding-left:0.75rem;padding-right:0.75rem}.px-4{padding-left:1rem;padding-right:1rem}.px-5{padding-left:1.25rem;padding-right:1.25rem}.px-7{padding-left:1.75rem;padding-right:1.75rem}.px-8{padding-left:2rem;padding-right:2rem}.py-1{padding-top:0.25rem;padding-bottom:0.25rem}.py-1\.5{padding-top:0.375rem;padding-bottom:0.375rem}.py-2{padding-top:0.5rem;padding-bottom:0.5rem}.py-3{padding-top:0.75rem;padding-bottom:0.75rem}.py-4{padding-top:1rem;padding-bottom:1rem}.py-5{padding-top:1.25rem;padding-bottom:1.25rem}.pr-10{padding-right:2.5rem}.text-left{text-align:left}.text-center{text-align:center}.text-right{text-align:right}.font-mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}.text-2xl{font-size:1.5rem;line-height:2rem}.text-3xl{font-size:1.875rem;line-height:2.25rem}.text-5xl{font-size:3rem;line-height:1}.text-7xl{font-size:4.5rem;line-height:1}.text-lg{font-size:1.125rem;line-height:1.75rem}.text-sm{font-size:0.875rem;line-height:1.25rem}.text-xl{font-size:1.25rem;line-height:1.75rem}.text-xs{font-size:0.75rem;line-height:1rem}.font-black{font-weight:900}.font-bold{font-weight:700}.uppercase{text-transform:uppercase}.tracking-\[0\.2em\]{letter-spacing:0.2em}.tracking-tight{letter-spacing:-0.025em}.text-amber-800{--tw-text-opacity:1;color:rgb(146 64 14 / var(--tw-text-opacity, 1))}.text-blue-600{--tw-text-opacity:1;color:rgb(37 99 235 / var(--tw-text-opacity, 1))}.text-blue-700{--tw-text-opacity:1;color:rgb(29 78 216 / var(--tw-text-opacity, 1))}.text-emerald-700{--tw-text-opacity:1;color:rgb(4 120 87 / var(--tw-text-opacity, 1))}.text-gray-500{--tw-text-opacity:1;color:rgb(107 114 128 / var(--tw-text-opacity, 1))}.text-orange-500{--tw-text-opacity:1;color:rgb(249 115 22 / var(--tw-text-opacity, 1))}.text-orange-600{--tw-text-opacity:1;color:rgb(234 88 12 / var(--tw-text-opacity, 1))}.text-orange-700{--tw-text-opacity:1;color:rgb(194 65 12 / var(--tw-text-opacity, 1))}.text-purple-700{--tw-text-opacity:1;color:rgb(126 34 206 / var(--tw-text-opacity, 1))}.text-red-500{--tw-text-opacity:1;color:rgb(239 68 68 / var(--tw-text-opacity, 1))}.text-slate-400{--tw-text-opacity:1;color:rgb(148 163 184 / var(--tw-text-opacity, 1))}.text-slate-500{--tw-text-opacity:1;color:rgb(100 116 139 / var(--tw-text-opacity, 1))}.text-slate-600{--tw-text-opacity:1;color:rgb(71 85 105 / var(--tw-text-opacity, 1))}.text-slate-700{--tw-text-opacity:1;color:rgb(51 65 85 / var(--tw-text-opacity, 1))}.text-slate-800{--tw-text-opacity:1;color:rgb(30 41 59 / var(--tw-text-opacity, 1))}.text-white{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.text-red-400{--tw-text-opacity:1;color:rgb(248 113 113 / var(--tw-text-opacity, 1))}.opacity-50{opacity:0.5}.shadow-2xl{--tw-shadow:0 25px 50px -12px rgb(0 0 0 / 0.25);--tw-shadow-colored:0 25px 50px -12px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-lg{--tw-shadow:0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 10px 15px -3px var(--tw-shadow-color), 0 4px 6px -4px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-md{--tw-shadow:0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 4px 6px -1px var(--tw-shadow-color), 0 2px 4px -2px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-sm{--tw-shadow:0 1px 2px 0 rgb(0 0 0 / 0.05);--tw-shadow-colored:0 1px 2px 0 var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-xl{--tw-shadow:0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 20px 25px -5px var(--tw-shadow-color), 0 8px 10px -6px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.outline-none{outline:2px solid transparent;outline-offset:2px}.backdrop-blur-md{--tw-backdrop-blur:blur(12px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.backdrop-blur-sm{--tw-backdrop-blur:blur(4px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.transition{transition-property:color, background-color, border-color, fill, stroke, opacity, box-shadow, transform, filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.hover\:bg-blue-50:hover{--tw-bg-opacity:1;background-color:rgb(239 246 255 / var(--tw-bg-opacity, 1))}.hover\:bg-blue-700:hover{--tw-bg-opacity:1;background-color:rgb(29 78 216 / var(--tw-bg-opacity, 1))}.hover\:bg-emerald-50:hover{--tw-bg-opacity:1;background-color:rgb(236 253 245 / var(--tw-bg-opacity, 1))}.hover\:bg-purple-50:hover{--tw-bg-opacity:1;background-color:rgb(250 245 255 / var(--tw-bg-opacity, 1))}.hover\:bg-slate-200:hover{--tw-bg-opacity:1;background-color:rgb(226 232 240 / var(--tw-bg-opacity, 1))}.hover\:bg-slate-900:hover{--tw-bg-opacity:1;background-color:rgb(15 23 42 / var(--tw-bg-opacity, 1))}.hover\:bg-slate-50:hover{--tw-bg-opacity:1;background-color:rgb(248 250 252 / var(--tw-bg-opacity, 1))}.focus\:border-blue-500:focus{--tw-border-opacity:1;border-color:rgb(59 130 246 / var(--tw-border-opacity, 1))}@media (min-width: 768px){.md\:grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}}</style><style>*, ::before, ::after{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/* ! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com */*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}::after,::before{--tw-content:''}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.absolute{position:absolute}.relative{position:relative}.sticky{position:sticky}.inset-0{inset:0px}.top-0{top:0px}.z-50{z-index:50}.mx-4{margin-left:1rem;margin-right:1rem}.mx-auto{margin-left:auto;margin-right:auto}.mb-2{margin-bottom:0.5rem}.mb-3{margin-bottom:0.75rem}.mb-4{margin-bottom:1rem}.mb-6{margin-bottom:1.5rem}.ml-1{margin-left:0.25rem}.mt-3{margin-top:0.75rem}.mt-4{margin-top:1rem}.mt-5{margin-top:1.25rem}.mt-6{margin-top:1.5rem}.flex{display:flex}.grid{display:grid}.hidden{display:none}.max-h-72{max-height:18rem}.min-h-\[140px\]{min-height:140px}.w-1\/4{width:25%}.w-12{width:3rem}.w-80{width:20rem}.w-96{width:24rem}.w-full{width:100%}.max-w-4xl{max-width:56rem}.max-w-6xl{max-width:72rem}.max-w-7xl{max-width:80rem}.flex-1{flex:1 1 0%}.flex-grow{flex-grow:1}.border-collapse{border-collapse:collapse}.cursor-not-allowed{cursor:not-allowed}.grid-cols-1{grid-template-columns:repeat(1, minmax(0, 1fr))}.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}.items-center{align-items:center}.justify-end{justify-content:flex-end}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-2{gap:0.5rem}.gap-2\.5{gap:0.625rem}.gap-3{gap:0.75rem}.gap-4{gap:1rem}.space-y-2 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.5rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.5rem * var(--tw-space-y-reverse))}.overflow-auto{overflow:auto}.overflow-hidden{overflow:hidden}.rounded-2xl{border-radius:1rem}.rounded-3xl{border-radius:1.5rem}.rounded-\[2\.5rem\]{border-radius:2.5rem}.rounded-full{border-radius:9999px}.rounded-xl{border-radius:0.75rem}.border{border-width:1px}.border-2{border-width:2px}.border-4{border-width:4px}.border-b{border-bottom-width:1px}.border-b-8{border-bottom-width:8px}.border-l-4{border-left-width:4px}.border-r-4{border-right-width:4px}.border-blue-100{--tw-border-opacity:1;border-color:rgb(219 234 254 / var(--tw-border-opacity, 1))}.border-blue-200{--tw-border-opacity:1;border-color:rgb(191 219 254 / var(--tw-border-opacity, 1))}.border-blue-200\/60{border-color:rgb(191 219 254 / 0.6)}.border-blue-300{--tw-border-opacity:1;border-color:rgb(147 197 253 / var(--tw-border-opacity, 1))}.border-emerald-200{--tw-border-opacity:1;border-color:rgb(167 243 208 / var(--tw-border-opacity, 1))}.border-indigo-200{--tw-border-opacity:1;border-color:rgb(199 210 254 / var(--tw-border-opacity, 1))}.border-orange-100{--tw-border-opacity:1;border-color:rgb(255 237 213 / var(--tw-border-opacity, 1))}.border-orange-200\/60{border-color:rgb(254 215 170 / 0.6)}.border-orange-300{--tw-border-opacity:1;border-color:rgb(253 186 116 / var(--tw-border-opacity, 1))}.border-purple-200{--tw-border-opacity:1;border-color:rgb(233 213 255 / var(--tw-border-opacity, 1))}.border-slate-100{--tw-border-opacity:1;border-color:rgb(241 245 249 / var(--tw-border-opacity, 1))}.border-slate-200{--tw-border-opacity:1;border-color:rgb(226 232 240 / var(--tw-border-opacity, 1))}.bg-amber-100{--tw-bg-opacity:1;background-color:rgb(254 243 199 / var(--tw-bg-opacity, 1))}.bg-blue-50{--tw-bg-opacity:1;background-color:rgb(239 246 255 / var(--tw-bg-opacity, 1))}.bg-blue-600{--tw-bg-opacity:1;background-color:rgb(37 99 235 / var(--tw-bg-opacity, 1))}.bg-blue-700{--tw-bg-opacity:1;background-color:rgb(29 78 216 / var(--tw-bg-opacity, 1))}.bg-emerald-600{--tw-bg-opacity:1;background-color:rgb(5 150 105 / var(--tw-bg-opacity, 1))}.bg-gray-200{--tw-bg-opacity:1;background-color:rgb(229 231 235 / var(--tw-bg-opacity, 1))}.bg-green-500{--tw-bg-opacity:1;background-color:rgb(34 197 94 / var(--tw-bg-opacity, 1))}.bg-indigo-500{--tw-bg-opacity:1;background-color:rgb(99 102 241 / var(--tw-bg-opacity, 1))}.bg-indigo-600{--tw-bg-opacity:1;background-color:rgb(79 70 229 / var(--tw-bg-opacity, 1))}.bg-orange-50{--tw-bg-opacity:1;background-color:rgb(255 247 237 / var(--tw-bg-opacity, 1))}.bg-orange-500{--tw-bg-opacity:1;background-color:rgb(249 115 22 / var(--tw-bg-opacity, 1))}.bg-orange-600{--tw-bg-opacity:1;background-color:rgb(234 88 12 / var(--tw-bg-opacity, 1))}.bg-purple-600{--tw-bg-opacity:1;background-color:rgb(147 51 234 / var(--tw-bg-opacity, 1))}.bg-slate-100{--tw-bg-opacity:1;background-color:rgb(241 245 249 / var(--tw-bg-opacity, 1))}.bg-slate-50{--tw-bg-opacity:1;background-color:rgb(248 250 252 / var(--tw-bg-opacity, 1))}.bg-slate-800{--tw-bg-opacity:1;background-color:rgb(30 41 59 / var(--tw-bg-opacity, 1))}.bg-slate-900{--tw-bg-opacity:1;background-color:rgb(15 23 42 / var(--tw-bg-opacity, 1))}.bg-slate-900\/90{background-color:rgb(15 23 42 / 0.9)}.bg-white{--tw-bg-opacity:1;background-color:rgb(255 255 255 / var(--tw-bg-opacity, 1))}.bg-white\/90{background-color:rgb(255 255 255 / 0.9)}.bg-gradient-to-b{background-image:linear-gradient(to bottom, var(--tw-gradient-stops))}.from-blue-50{--tw-gradient-from:#eff6ff var(--tw-gradient-from-position);--tw-gradient-to:rgb(239 246 255 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.from-orange-50{--tw-gradient-from:#fff7ed var(--tw-gradient-from-position);--tw-gradient-to:rgb(255 247 237 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.from-sky-50{--tw-gradient-from:#f0f9ff var(--tw-gradient-from-position);--tw-gradient-to:rgb(240 249 255 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.via-white{--tw-gradient-to:rgb(255 255 255 / 0)  var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), #fff var(--tw-gradient-via-position), var(--tw-gradient-to)}.to-amber-50\/30{--tw-gradient-to:rgb(255 251 235 / 0.3) var(--tw-gradient-to-position)}.to-white{--tw-gradient-to:#fff var(--tw-gradient-to-position)}.p-2{padding:0.5rem}.p-3{padding:0.75rem}.p-4{padding:1rem}.p-5{padding:1.25rem}.p-6{padding:1.5rem}.p-8{padding:2rem}.px-10{padding-left:2.5rem;padding-right:2.5rem}.px-12{padding-left:3rem;padding-right:3rem}.px-3{padding-left:0.75rem;padding-right:0.75rem}.px-4{padding-left:1rem;padding-right:1rem}.px-5{padding-left:1.25rem;padding-right:1.25rem}.px-7{padding-left:1.75rem;padding-right:1.75rem}.px-8{padding-left:2rem;padding-right:2rem}.py-1{padding-top:0.25rem;padding-bottom:0.25rem}.py-1\.5{padding-top:0.375rem;padding-bottom:0.375rem}.py-2{padding-top:0.5rem;padding-bottom:0.5rem}.py-3{padding-top:0.75rem;padding-bottom:0.75rem}.py-4{padding-top:1rem;padding-bottom:1rem}.py-5{padding-top:1.25rem;padding-bottom:1.25rem}.pr-10{padding-right:2.5rem}.text-left{text-align:left}.text-center{text-align:center}.text-right{text-align:right}.font-mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}.text-2xl{font-size:1.5rem;line-height:2rem}.text-3xl{font-size:1.875rem;line-height:2.25rem}.text-5xl{font-size:3rem;line-height:1}.text-7xl{font-size:4.5rem;line-height:1}.text-lg{font-size:1.125rem;line-height:1.75rem}.text-sm{font-size:0.875rem;line-height:1.25rem}.text-xl{font-size:1.25rem;line-height:1.75rem}.text-xs{font-size:0.75rem;line-height:1rem}.font-black{font-weight:900}.font-bold{font-weight:700}.uppercase{text-transform:uppercase}.tracking-\[0\.2em\]{letter-spacing:0.2em}.tracking-tight{letter-spacing:-0.025em}.text-amber-800{--tw-text-opacity:1;color:rgb(146 64 14 / var(--tw-text-opacity, 1))}.text-blue-600{--tw-text-opacity:1;color:rgb(37 99 235 / var(--tw-text-opacity, 1))}.text-blue-700{--tw-text-opacity:1;color:rgb(29 78 216 / var(--tw-text-opacity, 1))}.text-emerald-700{--tw-text-opacity:1;color:rgb(4 120 87 / var(--tw-text-opacity, 1))}.text-gray-500{--tw-text-opacity:1;color:rgb(107 114 128 / var(--tw-text-opacity, 1))}.text-orange-500{--tw-text-opacity:1;color:rgb(249 115 22 / var(--tw-text-opacity, 1))}.text-orange-600{--tw-text-opacity:1;color:rgb(234 88 12 / var(--tw-text-opacity, 1))}.text-orange-700{--tw-text-opacity:1;color:rgb(194 65 12 / var(--tw-text-opacity, 1))}.text-purple-700{--tw-text-opacity:1;color:rgb(126 34 206 / var(--tw-text-opacity, 1))}.text-red-400{--tw-text-opacity:1;color:rgb(248 113 113 / var(--tw-text-opacity, 1))}.text-red-500{--tw-text-opacity:1;color:rgb(239 68 68 / var(--tw-text-opacity, 1))}.text-slate-400{--tw-text-opacity:1;color:rgb(148 163 184 / var(--tw-text-opacity, 1))}.text-slate-500{--tw-text-opacity:1;color:rgb(100 116 139 / var(--tw-text-opacity, 1))}.text-slate-600{--tw-text-opacity:1;color:rgb(71 85 105 / var(--tw-text-opacity, 1))}.text-slate-700{--tw-text-opacity:1;color:rgb(51 65 85 / var(--tw-text-opacity, 1))}.text-slate-800{--tw-text-opacity:1;color:rgb(30 41 59 / var(--tw-text-opacity, 1))}.text-white{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.opacity-50{opacity:0.5}.shadow-2xl{--tw-shadow:0 25px 50px -12px rgb(0 0 0 / 0.25);--tw-shadow-colored:0 25px 50px -12px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-lg{--tw-shadow:0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 10px 15px -3px var(--tw-shadow-color), 0 4px 6px -4px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-md{--tw-shadow:0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 4px 6px -1px var(--tw-shadow-color), 0 2px 4px -2px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-sm{--tw-shadow:0 1px 2px 0 rgb(0 0 0 / 0.05);--tw-shadow-colored:0 1px 2px 0 var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-xl{--tw-shadow:0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 20px 25px -5px var(--tw-shadow-color), 0 8px 10px -6px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.outline-none{outline:2px solid transparent;outline-offset:2px}.backdrop-blur-md{--tw-backdrop-blur:blur(12px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.backdrop-blur-sm{--tw-backdrop-blur:blur(4px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.transition{transition-property:color, background-color, border-color, fill, stroke, opacity, box-shadow, transform, filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.hover\:bg-blue-50:hover{--tw-bg-opacity:1;background-color:rgb(239 246 255 / var(--tw-bg-opacity, 1))}.hover\:bg-blue-700:hover{--tw-bg-opacity:1;background-color:rgb(29 78 216 / var(--tw-bg-opacity, 1))}.hover\:bg-emerald-50:hover{--tw-bg-opacity:1;background-color:rgb(236 253 245 / var(--tw-bg-opacity, 1))}.hover\:bg-purple-50:hover{--tw-bg-opacity:1;background-color:rgb(250 245 255 / var(--tw-bg-opacity, 1))}.hover\:bg-slate-200:hover{--tw-bg-opacity:1;background-color:rgb(226 232 240 / var(--tw-bg-opacity, 1))}.hover\:bg-slate-900:hover{--tw-bg-opacity:1;background-color:rgb(15 23 42 / var(--tw-bg-opacity, 1))}.focus\:border-blue-500:focus{--tw-border-opacity:1;border-color:rgb(59 130 246 / var(--tw-border-opacity, 1))}@media (min-width: 768px){.md\:grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}}</style></head>
+<body>
+
+<!-- 顶部管理栏 -->
+<header class="admin-bar p-3">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+        <div class="flex gap-2">
+            <button id="timeBtn" class="px-4 py-1.5 bg-white border-2 border-blue-200 rounded-xl text-blue-700 font-bold text-sm hover:bg-blue-50 shadow-sm">⏱ 时长</button>
+            <button id="quizBtn" class="px-4 py-1.5 bg-white border-2 border-blue-200 rounded-xl text-blue-700 font-bold text-sm hover:bg-blue-50 shadow-sm">📚 题库</button>
+            <button id="changePwdBtn" class="px-4 py-1.5 bg-white border-2 border-purple-200 rounded-xl text-purple-700 font-bold text-sm hover:bg-purple-50 shadow-sm">🔑 改密码</button>
+            <button id="generateHtmlBtn" class="px-4 py-1.5 bg-white border-2 border-emerald-200 rounded-xl text-emerald-700 font-bold text-sm hover:bg-emerald-50 shadow-sm">💾 生成HTML</button>
+        </div>
+        <div class="text-center"><h1 class="text-xl font-black text-slate-800 tracking-tight">ZOOTOPIA <span class="text-blue-600">TUG</span>·<span class="text-orange-500">WAR</span><span class="text-xs ml-1">🎯 智能判题</span></h1></div>
+        <div class="flex gap-2">
+            <button id="resetBtn" class="px-4 py-1.5 bg-slate-100 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-200 border border-slate-200">🔄 重置</button>
+            <button id="startBtn" class="bg-blue-600 text-white py-1.5 px-7 rounded-xl font-black text-sm shadow-lg hover:bg-blue-700 transition">⚡ 开始对战</button>
+        </div>
+    </div>
+</header>
+
+<!-- 时长弹窗 -->
+<div id="time-modal" class="modal-overlay"><div class="bg-white p-8 rounded-[2.5rem] shadow-2xl w-80 border-4 border-blue-100"><h3 class="font-black text-slate-800 mb-4 text-center text-2xl">⏳ 比赛时间 (10~600秒)</h3><input type="number" id="setup-time" value="240" min="10" max="600" step="5" class="w-full px-4 py-5 border-4 border-slate-100 rounded-3xl outline-none focus:border-blue-500 font-black text-center text-5xl text-slate-700"><button id="saveTimeBtn" class="w-full mt-6 bg-slate-800 text-white py-4 rounded-2xl font-black text-lg hover:bg-slate-900">确定并保存</button></div></div>
+
+<!-- 题库弹窗 (无绘本配词) -->
+<div id="ques-modal" class="modal-overlay" style="display: none;"><div class="bg-white p-6 rounded-[2.5rem] shadow-2xl w-full max-w-6xl border-4 border-orange-100 mx-4" style="max-height: 90vh; overflow-y: auto;"><div class="flex items-center justify-between mb-3 flex-wrap gap-2"><h3 class="font-black text-slate-800 text-2xl">📖 编辑题库</h3><div class="flex gap-2"><button id="batchOpenBtn" class="bg-indigo-500 text-white px-4 py-2 rounded-xl font-bold text-sm">📋 批量导入</button><button id="addRowBtn" class="bg-green-500 text-white px-4 py-2 rounded-xl font-bold text-sm">➕ 添加一行</button><button id="resetTableBtn" class="bg-amber-100 text-amber-800 px-4 py-2 rounded-xl font-bold text-sm">🔄 恢复默认</button></div></div><div id="batch-panel" class="batch-panel hidden"><div class="flex justify-between mb-2"><span class="font-bold">📌 格式: 题目 | A | B | C | D | 正确答案</span><button id="closeBatchBtn" class="text-gray-500">✕</button></div><textarea id="batch-text" rows="4" class="w-full p-3 border-2 rounded-xl font-mono text-sm" placeholder="示例：太阳可以提供我们什么？|衣服|玩具|光和热|冰淇淋|光和热"></textarea><div class="flex justify-end gap-2 mt-3"><button id="clearBatchBtn" class="px-3 py-1 bg-gray-200 rounded-xl">清空</button><button id="importBatchBtn" class="px-4 py-1 bg-indigo-600 text-white rounded-xl">✨ 解析追加</button></div></div><div class="table-wrapper"><table class="edit-table w-full text-sm border-collapse"><thead class="sticky top-0 bg-slate-50"><tr><th class="p-2">题目</th><th class="p-2">A</th><th class="p-2">B</th><th class="p-2">C</th><th class="p-2">D</th><th class="p-2">正确答案</th><th class="p-2 w-12">操作</th></tr></thead><tbody id="questions-table-body"><tr class="border-b"><td class="p-2"><input type="text" value="太阳可以提供我们什么？" class="question-input w-full"></td>
+                         <td class="p-2"><input type="text" value="衣服" class="opt-a w-full"></td>
+                         <td class="p-2"><input type="text" value="玩具" class="opt-b w-full"></td>
+                         <td class="p-2"><input type="text" value="光和热" class="opt-c w-full"></td>
+                         <td class="p-2"><input type="text" value="冰淇淋" class="opt-d w-full"></td>
+                         <td class="p-2"><select class="correct-select w-full"><option value="衣服">A: 衣服</option><option value="玩具">B: 玩具</option><option value="光和热">C: 光和热</option><option value="冰淇淋">D: 冰淇淋</option></select></td>
+                         <td class="p-2 text-center"><button class="del-row text-red-400 font-bold text-lg">🗑️</button></td></tr><tr class="border-b"><td class="p-2"><input type="text" value="在马来西亚，哪种天气最常见？" class="question-input w-full"></td>
+                         <td class="p-2"><input type="text" value="下雪" class="opt-a w-full"></td>
+                         <td class="p-2"><input type="text" value="阳光充足" class="opt-b w-full"></td>
+                         <td class="p-2"><input type="text" value="结冰" class="opt-c w-full"></td>
+                         <td class="p-2"><input type="text" value="龙卷风" class="opt-d w-full"></td>
+                         <td class="p-2"><select class="correct-select w-full"><option value="下雪">A: 下雪</option><option value="阳光充足">B: 阳光充足</option><option value="结冰">C: 结冰</option><option value="龙卷风">D: 龙卷风</option></select></td>
+                         <td class="p-2 text-center"><button class="del-row text-red-400 font-bold text-lg">🗑️</button></td></tr><tr class="border-b"><td class="p-2"><input type="text" value="什么东西在天空中吹动，可以转动大风车？" class="question-input w-full"></td>
+                         <td class="p-2"><input type="text" value="雨" class="opt-a w-full"></td>
+                         <td class="p-2"><input type="text" value="云" class="opt-b w-full"></td>
+                         <td class="p-2"><input type="text" value="风" class="opt-c w-full"></td>
+                         <td class="p-2"><input type="text" value="鸟" class="opt-d w-full"></td>
+                         <td class="p-2"><select class="correct-select w-full"><option value="雨">A: 雨</option><option value="云">B: 云</option><option value="风">C: 风</option><option value="鸟">D: 鸟</option></select></td>
+                         <td class="p-2 text-center"><button class="del-row text-red-400 font-bold text-lg">🗑️</button></td></tr><tr class="border-b"><td class="p-2"><input type="text" value="大海里的水一波一波地动，这叫什么？" class="question-input w-full"></td>
+                         <td class="p-2"><input type="text" value="游泳" class="opt-a w-full"></td>
+                         <td class="p-2"><input type="text" value="海浪" class="opt-b w-full"></td>
+                         <td class="p-2"><input type="text" value="喝水" class="opt-c w-full"></td>
+                         <td class="p-2"><input type="text" value="冲凉" class="opt-d w-full"></td>
+                         <td class="p-2"><select class="correct-select w-full"><option value="游泳">A: 游泳</option><option value="海浪">B: 海浪</option><option value="喝水">C: 喝水</option><option value="冲凉">D: 冲凉</option></select></td>
+                         <td class="p-2 text-center"><button class="del-row text-red-400 font-bold text-lg">🗑️</button></td></tr><tr class="border-b"><td class="p-2"><input type="text" value="什么是可更新能源？" class="question-input w-full"></td>
+                         <td class="p-2"><input type="text" value="很快用完的东西" class="opt-a w-full"></td>
+                         <td class="p-2"><input type="text" value="不会用完的自然能源" class="opt-b w-full"></td>
+                         <td class="p-2"><input type="text" value="很难找的东西" class="opt-c w-full"></td>
+                         <td class="p-2"><input type="text" value="垃圾桶" class="opt-d w-full"></td>
+                         <td class="p-2"><select class="correct-select w-full"><option value="很快用完的东西">A: 很快用完的东西</option><option value="不会用完的自然能源">B: 不会用完的自然能源</option><option value="很难找的东西">C: 很难找的东西</option><option value="垃圾桶">D: 垃圾桶</option></select></td>
+                         <td class="p-2 text-center"><button class="del-row text-red-400 font-bold text-lg">🗑️</button></td></tr><tr class="border-b"><td class="p-2"><input type="text" value="哪种东西不是来自大自然的能源？" class="question-input w-full"></td>
+                         <td class="p-2"><input type="text" value="太阳" class="opt-a w-full"></td>
+                         <td class="p-2"><input type="text" value="风" class="opt-b w-full"></td>
+                         <td class="p-2"><input type="text" value="塑料袋" class="opt-c w-full"></td>
+                         <td class="p-2"><input type="text" value="运行的水" class="opt-d w-full"></td>
+                         <td class="p-2"><select class="correct-select w-full"><option value="太阳">A: 太阳</option><option value="风">B: 风</option><option value="塑料袋">C: 塑料袋</option><option value="运行的水">D: 运行的水</option></select></td>
+                         <td class="p-2 text-center"><button class="del-row text-red-400 font-bold text-lg">🗑️</button></td></tr><tr class="border-b"><td class="p-2"><input type="text" value="太阳能板（Solar Panel）是用来做什么的？" class="question-input w-full"></td>
+                         <td class="p-2"><input type="text" value="收集阳光发电" class="opt-a w-full"></td>
+                         <td class="p-2"><input type="text" value="挡雨" class="opt-b w-full"></td>
+                         <td class="p-2"><input type="text" value="煮饭" class="opt-c w-full"></td>
+                         <td class="p-2"><input type="text" value="照镜子" class="opt-d w-full"></td>
+                         <td class="p-2"><select class="correct-select w-full"><option value="收集阳光发电">A: 收集阳光发电</option><option value="挡雨">B: 挡雨</option><option value="煮饭">C: 煮饭</option><option value="照镜子">D: 照镜子</option></select></td>
+                         <td class="p-2 text-center"><button class="del-row text-red-400 font-bold text-lg">🗑️</button></td></tr><tr class="border-b"><td class="p-2"><input type="text" value="水力发电是利用什么来发电？" class="question-input w-full"></td>
+                         <td class="p-2"><input type="text" value="泥土" class="opt-a w-full"></td>
+                         <td class="p-2"><input type="text" value="流动的水" class="opt-b w-full"></td>
+                         <td class="p-2"><input type="text" value="木头" class="opt-c w-full"></td>
+                         <td class="p-2"><input type="text" value="石头" class="opt-d w-full"></td>
+                         <td class="p-2"><select class="correct-select w-full"><option value="泥土">A: 泥土</option><option value="流动的水">B: 流动的水</option><option value="木头">C: 木头</option><option value="石头">D: 石头</option></select></td>
+                         <td class="p-2 text-center"><button class="del-row text-red-400 font-bold text-lg">🗑️</button></td></tr><tr class="border-b"><td class="p-2"><input type="text" value="为什么我们要节约用电？" class="question-input w-full"></td>
+                         <td class="p-2"><input type="text" value="为了好玩" class="opt-a w-full"></td>
+                         <td class="p-2"><input type="text" value="为了保护地球" class="opt-b w-full"></td>
+                         <td class="p-2"><input type="text" value="为了浪费钱" class="opt-c w-full"></td>
+                         <td class="p-2"><input type="text" value="为了让天变黑" class="opt-d w-full"></td>
+                         <td class="p-2"><select class="correct-select w-full"><option value="为了好玩">A: 为了好玩</option><option value="为了保护地球">B: 为了保护地球</option><option value="为了浪费钱">C: 为了浪费钱</option><option value="为了让天变黑">D: 为了让天变黑</option></select></td>
+                         <td class="p-2 text-center"><button class="del-row text-red-400 font-bold text-lg">🗑️</button></td></tr><tr class="border-b"><td class="p-2"><input type="text" value="如果我们一直浪费石油，石油会怎样？" class="question-input w-full"></td>
+                         <td class="p-2"><input type="text" value="越来越多" class="opt-a w-full"></td>
+                         <td class="p-2"><input type="text" value="会用完" class="opt-b w-full"></td>
+                         <td class="p-2"><input type="text" value="变成水" class="opt-c w-full"></td>
+                         <td class="p-2"><input type="text" value="不会变" class="opt-d w-full"></td>
+                         <td class="p-2"><select class="correct-select w-full"><option value="越来越多">A: 越来越多</option><option value="会用完">B: 会用完</option><option value="变成水">C: 变成水</option><option value="不会变">D: 不会变</option></select></td>
+                         <td class="p-2 text-center"><button class="del-row text-red-400 font-bold text-lg">🗑️</button></td></tr><tr class="border-b"><td class="p-2"><input type="text" value="哪种能源是比较干净、不污染空气的？" class="question-input w-full"></td>
+                         <td class="p-2"><input type="text" value="黑烟" class="opt-a w-full"></td>
+                         <td class="p-2"><input type="text" value="煤炭" class="opt-b w-full"></td>
+                         <td class="p-2"><input type="text" value="太阳能" class="opt-c w-full"></td>
+                         <td class="p-2"><input type="text" value="废气" class="opt-d w-full"></td>
+                         <td class="p-2"><select class="correct-select w-full"><option value="黑烟">A: 黑烟</option><option value="煤炭">B: 煤炭</option><option value="太阳能">C: 太阳能</option><option value="废气">D: 废气</option></select></td>
+                         <td class="p-2 text-center"><button class="del-row text-red-400 font-bold text-lg">🗑️</button></td></tr><tr class="border-b"><td class="p-2"><input type="text" value="大风车（风力发电机）通常建在什么地方？" class="question-input w-full"></td>
+                         <td class="p-2"><input type="text" value="房间里" class="opt-a w-full"></td>
+                         <td class="p-2"><input type="text" value="风很大的地方" class="opt-b w-full"></td>
+                         <td class="p-2"><input type="text" value="地洞里" class="opt-c w-full"></td>
+                         <td class="p-2"><input type="text" value="电影院" class="opt-d w-full"></td>
+                         <td class="p-2"><select class="correct-select w-full"><option value="房间里">A: 房间里</option><option value="风很大的地方">B: 风很大的地方</option><option value="地洞里">C: 地洞里</option><option value="电影院">D: 电影院</option></select></td>
+                         <td class="p-2 text-center"><button class="del-row text-red-400 font-bold text-lg">🗑️</button></td></tr><tr class="border-b"><td class="p-2"><input type="text" value="植物和动物的废料可以变成能源吗？" class="question-input w-full"></td>
+                         <td class="p-2"><input type="text" value="可以" class="opt-a w-full"></td>
+                         <td class="p-2"><input type="text" value="不可以" class="opt-b w-full"></td>
+                         <td class="p-2"><input type="text" value="不知道" class="opt-c w-full"></td>
+                         <td class="p-2"><input type="text" value="没可能" class="opt-d w-full"></td>
+                         <td class="p-2"><select class="correct-select w-full"><option value="可以">A: 可以</option><option value="不可以">B: 不可以</option><option value="不知道">C: 不知道</option><option value="没可能">D: 没可能</option></select></td>
+                         <td class="p-2 text-center"><button class="del-row text-red-400 font-bold text-lg">🗑️</button></td></tr><tr class="border-b"><td class="p-2"><input type="text" value="为了让空气更清新，我们应该支持什么？" class="question-input w-full"></td>
+                         <td class="p-2"><input type="text" value="烧垃圾" class="opt-a w-full"></td>
+                         <td class="p-2"><input type="text" value="种树和用绿能源" class="opt-b w-full"></td>
+                         <td class="p-2"><input type="text" value="排黑烟" class="opt-c w-full"></td>
+                         <td class="p-2"><input type="text" value="砍树" class="opt-d w-full"></td>
+                         <td class="p-2"><select class="correct-select w-full"><option value="烧垃圾">A: 烧垃圾</option><option value="种树和用绿能源">B: 种树和用绿能源</option><option value="排黑烟">C: 排黑烟</option><option value="砍树">D: 砍树</option></select></td>
+                         <td class="p-2 text-center"><button class="del-row text-red-400 font-bold text-lg">🗑️</button></td></tr><tr class="border-b"><td class="p-2"><input type="text" value="地球的深处其实是很热的，对吗？" class="question-input w-full"></td>
+                         <td class="p-2"><input type="text" value="对" class="opt-a w-full"></td>
+                         <td class="p-2"><input type="text" value="不对" class="opt-b w-full"></td>
+                         <td class="p-2"><input type="text" value="很冷" class="opt-c w-full"></td>
+                         <td class="p-2"><input type="text" value="像冰块" class="opt-d w-full"></td>
+                         <td class="p-2"><select class="correct-select w-full"><option value="对">A: 对</option><option value="不对">B: 不对</option><option value="很冷">C: 很冷</option><option value="像冰块">D: 像冰块</option></select></td>
+                         <td class="p-2 text-center"><button class="del-row text-red-400 font-bold text-lg">🗑️</button></td></tr></tbody></table></div><div class="flex justify-end mt-5"><button id="saveQuesBtn" class="bg-orange-500 text-white px-8 py-3 rounded-2xl font-black shadow-md">💾 保存并关闭</button></div></div></div>
+
+<!-- 密码相关模态框 (保持原样) -->
+<div id="password-modal" class="modal-overlay" style="z-index: 1100; display: none;"><div class="bg-white rounded-3xl shadow-2xl w-96 p-6 border-4 border-indigo-200"><div class="text-center mb-4"><h3 class="font-black text-2xl">🔐 管理员验证</h3><p class="text-sm text-slate-500">请输入密码</p></div><div class="relative mb-3"><input type="password" id="password-input" class="w-full p-3 border-2 rounded-xl pr-10"><span id="toggle-password" class="password-eye">👁️</span></div><div class="flex justify-between text-sm mb-4"><span id="attempts-left" class="text-red-500 font-bold">剩余次数: 5</span><span id="wait-timer"></span></div><div class="flex gap-3"><button id="cancel-pwd-btn" class="flex-1 py-2 rounded-xl border">取消</button><button id="confirm-pwd-btn" class="flex-1 py-2 rounded-xl bg-indigo-600 text-white">确认</button></div></div></div>
+<div id="change-pwd-modal" class="modal-overlay" style="z-index: 1100;"><div class="bg-white rounded-3xl shadow-2xl w-96 p-6 border-4 border-purple-200"><div class="text-center mb-4"><h3 class="font-black text-2xl">更换密码</h3></div><div class="relative mb-3"><input type="password" id="current-pwd" class="w-full p-3 border rounded-xl pr-10" placeholder="当前密码"><span id="toggle-current" class="password-eye">👁️</span></div><div class="relative mb-3"><input type="password" id="new-pwd" class="w-full p-3 border rounded-xl pr-10" placeholder="新密码"><span id="toggle-new" class="password-eye">👁️</span></div><div class="relative mb-4"><input type="password" id="confirm-pwd" class="w-full p-3 border rounded-xl pr-10" placeholder="确认新密码"><span id="toggle-confirm" class="password-eye">👁️</span></div><div class="flex gap-3"><button id="cancel-change-btn" class="flex-1 py-2 rounded-xl border">取消</button><button id="confirm-change-btn" class="flex-1 py-2 rounded-xl bg-purple-600 text-white">确认更换</button></div></div></div>
+<div id="global-lock" style="display: none;" class="lock-overlay"><div class="text-center"><div class="text-7xl">🔒</div><h2 class="text-3xl font-black">页面已封锁</h2><p>多次密码错误，请联系管理员</p></div></div>
+
+<!-- 主游戏区 -->
+<div class="flex-grow flex w-full overflow-hidden">
+    <aside class="w-1/4 bg-gradient-to-b from-blue-50 to-white flex flex-col p-4 border-r-4 border-blue-200/60"><div class="flex flex-col items-center mb-2"><div class="bg-blue-700 text-white px-5 py-1.5 rounded-full text-xs font-black">🐰 朱迪</div><div id="score1" class="text-7xl font-black text-blue-700">0</div></div><div class="flex-grow flex flex-col justify-center gap-3"><div class="p-5 bg-white rounded-3xl shadow-xl border-b-8 border-blue-300 min-h-[140px] flex items-center justify-center text-center"><p id="q1" class="text-slate-800 text-xl font-black">🐾 准备好了吗？</p></div><div id="opts1" class="grid gap-2.5"></div><div class="random-order-hint">✨ 选项顺序随机 ✨</div></div></aside>
+    <main class="flex-grow flex flex-col relative bg-gradient-to-b from-sky-50 via-white to-amber-50/30 overflow-hidden"><div class="flex justify-center py-4"><div class="bg-slate-900/90 backdrop-blur-sm px-10 py-3 rounded-3xl shadow-2xl"><span id="timer" class="text-5xl font-mono font-black text-white">04:00</span></div></div><div class="flex-grow flex flex-col items-center justify-center"><div class="battlefield"><div class="fixed-center-dash"></div><div id="rope-move-container" class="rope-container" style="transform: translateX(0px);">
+        <!-- 朱迪SVG（双手） -->
+        <div id="char-blue" class="character idle-float" style="--base-rot: 5deg; margin-right: -8px;">
+            <svg width="130" height="190" viewBox="0 0 200 270"><g transform="translate(100,65)"><path d="M-30-50C-45-120-15-130-5-20" fill="#cbd5e1" stroke="#1e3a8a" stroke-width="2.5"></path><path d="M30-50C45-12015-1305-20" fill="#cbd5e1" stroke="#1e3a8a" stroke-width="2.5"></path><path d="M-4525C-7035-8048-7558" stroke="#9ca3af" stroke-width="12" stroke-linecap="round" fill="none"></path><g transform="translate(-82,60)"><ellipse cx="0" cy="0" rx="12" ry="10" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"></ellipse><circle cx="-4" cy="-2" r="2.5" fill="#fcd34d"></circle><circle cx="4" cy="-2" r="2.5" fill="#fcd34d"></circle><circle cx="0" cy="5" r="3" fill="#fcd34d"></circle></g><path d="M4525C703580487558" stroke="#9ca3af" stroke-width="12" stroke-linecap="round" fill="none"></path><g transform="translate(82,60)"><ellipse cx="0" cy="0" rx="12" ry="10" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"></ellipse><circle cx="-4" cy="-2" r="2.5" fill="#fcd34d"></circle><circle cx="4" cy="-2" r="2.5" fill="#fcd34d"></circle><circle cx="0" cy="5" r="3" fill="#fcd34d"></circle></g></g><ellipse cx="100" cy="105" rx="48" ry="43" fill="#e5e7eb" stroke="#1e3a8a" stroke-width="2.5"></ellipse><circle cx="80" cy="95" r="6" fill="#111827"></circle><circle cx="120" cy="95" r="6" fill="#111827"></circle><path d="M65145L135145L150220L50220Z" fill="#1e3a8a" stroke="#0f172a" stroke-width="2"></path><rect x="50" y="205" width="100" height="18" fill="#111827" rx="5"></rect><circle cx="100" cy="170" r="9" fill="#fbbf24"></circle><path d="M135170Q180175200185" stroke="#9ca3af" stroke-width="14" stroke-linecap="round" fill="none"></path></svg>
+        </div>
+        <div class="relative"><div class="rope"><div class="rope-marker"><div></div></div></div></div>
+        <!-- 尼克SVG（双手） -->
+        <div id="char-red" class="character idle-float" style="--base-rot: -5deg; margin-left: -8px;">
+            <svg width="130" height="190" viewBox="0 0 200 270"><path d="M7055L55-5L8545" fill="#ea580c" stroke="#431407" stroke-width="2.5"></path><path d="M13055L145-5L11545" fill="#ea580c" stroke="#431407" stroke-width="2.5"></path><path d="M5585C30952511038115" stroke="#fb923c" stroke-width="12" stroke-linecap="round" fill="none"></path><g transform="translate(35,118)"><ellipse cx="0" cy="0" rx="13" ry="11" fill="#fed7aa" stroke="#9a3412" stroke-width="1.5"></ellipse><circle cx="-4" cy="-3" r="2.5" fill="#b45309"></circle><circle cx="4" cy="-3" r="2.5" fill="#b45309"></circle><circle cx="0" cy="5" r="3.5" fill="#b45309"></circle></g><path d="M14585C17095175110162115" stroke="#fb923c" stroke-width="12" stroke-linecap="round" fill="none"></path><g transform="translate(165,118)"><ellipse cx="0" cy="0" rx="13" ry="11" fill="#fed7aa" stroke="#9a3412" stroke-width="1.5"></ellipse><circle cx="-4" cy="-3" r="2.5" fill="#b45309"></circle><circle cx="4" cy="-3" r="2.5" fill="#b45309"></circle><circle cx="0" cy="5" r="3.5" fill="#b45309"></circle></g><path d="M50105Q10055150105Q165145100155Q3514550105" fill="#fb923c" stroke="#7c2d12" stroke-width="2.5"></path><circle cx="75" cy="100" r="5" fill="#1c1917"></circle><circle cx="125" cy="100" r="5" fill="#1c1917"></circle><ellipse cx="100" cy="120" rx="6" ry="4" fill="#292524"></ellipse><rect x="65" y="155" width="75" height="85" rx="12" fill="#84cc16" stroke="#365314" stroke-width="2.5"></rect><polygon points="100,15592,180100,200108,180" fill="#facc15"></polygon><path d="M65175Q25175-5185" stroke="#fb923c" stroke-width="14" stroke-linecap="round" fill="none"></path></svg>
+        </div>
+    </div></div><div id="status-label" class="mb-4 px-12 py-3 bg-white/90 backdrop-blur-sm shadow-xl rounded-full font-black text-slate-800 uppercase tracking-[0.2em] border-2 border-slate-200 text-sm">⚡ 双手紧握 · 智能判题 ⚡</div></div><div id="game-over" class="hidden absolute inset-0 bg-white/98 backdrop-blur-md z-50 flex flex-col items-center justify-center p-6"><h2 id="winner-text" class="text-7xl font-black mb-2">WINNER</h2><div id="final-stats" class="text-3xl font-black mb-6">0:0</div><div class="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-4 mb-6"><div class="bg-blue-50 p-4 rounded-3xl"><h4 class="font-black text-blue-700">🐰 朱迪的答题卡</h4><div id="judy-report" class="space-y-2 text-left max-h-72 overflow-auto"></div></div><div class="bg-orange-50 p-4 rounded-3xl"><h4 class="font-black text-orange-700">🦊 尼克的答题卡</h4><div id="nick-report" class="space-y-2 text-left max-h-72 overflow-auto"></div></div></div><div class="flex gap-4"><button id="downloadPdfBtn" class="bg-emerald-600 text-white px-8 py-3 rounded-2xl font-black text-xl">📄 下载战报PDF</button><button id="playAgainBtn" class="bg-slate-900 text-white px-10 py-3 rounded-2xl font-black text-xl opacity-50 cursor-not-allowed" disabled="">✨ 再战一局 ✨</button></div><p class="text-xs text-slate-400 mt-4">下载PDF后即可再次游戏</p></div></main>
+    <aside class="w-1/4 bg-gradient-to-b from-orange-50 to-white flex flex-col p-4 border-l-4 border-orange-200/60 text-right"><div class="flex flex-col items-center mb-2"><div class="bg-orange-600 text-white px-5 py-1.5 rounded-full text-xs font-black">🦊 尼克</div><div id="score2" class="text-7xl font-black text-orange-600">0</div></div><div class="flex-grow flex flex-col justify-center gap-3"><div class="p-5 bg-white rounded-3xl shadow-xl border-b-8 border-orange-300 min-h-[140px] flex items-center justify-center"><p id="q2" class="text-slate-800 text-xl font-black">🦊 来吧！</p></div><div id="opts2" class="grid gap-2.5"></div><div class="random-order-hint">✨ 选项顺序随机 ✨</div></div></aside>
+</div>
+
+<script>
+(function(){
+    "use strict";
+    
+    // ==================== 智能文本规范化函数 ====================
+    // 用于彻底解决空格、全角、不可见字符导致的判题错误
+    function normalizeText(str) {
+        if (!str) return '';
+        // 转为字符串
+        let s = String(str);
+        // 移除零宽空格、零宽连接符等不可见字符
+        s = s.replace(/[\u200B-\u200D\uFEFF]/g, '');
+        // 全角英文字母/数字转半角
+        s = s.replace(/[Ａ-Ｚａ-ｚ０-９]/g, function(c) {
+            return String.fromCharCode(c.charCodeAt(0) - 0xFEE0);
+        });
+        // 全角空格转半角空格
+        s = s.replace(/　/g, ' ');
+        // 移除所有控制字符（除了普通空格）
+        s = s.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+        // 将连续空白（包括空格、制表符、换行）替换为一个普通空格
+        s = s.replace(/\s+/g, ' ');
+        // 去除首尾空格
+        return s.trim();
+    }
+    
+    // 比较两个字符串是否相等（已规范化）
+    function isAnswerEqual(userAns, correctAns) {
+        return normalizeText(userAns) === normalizeText(correctAns);
+    }
+    
+    // ==================== 默认题库 ====================
+    const DEFAULT_QUESTIONS = [{"q":"太阳可以提供我们什么？","a":"衣服","b":"玩具","c":"光和热","d":"冰淇淋","correct":"光和热"},{"q":"在马来西亚，哪种天气最常见？","a":"下雪","b":"阳光充足","c":"结冰","d":"龙卷风","correct":"阳光充足"},{"q":"什么东西在天空中吹动，可以转动大风车？","a":"雨","b":"云","c":"风","d":"鸟","correct":"风"},{"q":"大海里的水一波一波地动，这叫什么？","a":"游泳","b":"海浪","c":"喝水","d":"冲凉","correct":"海浪"},{"q":"什么是可更新能源？","a":"很快用完的东西","b":"不会用完的自然能源","c":"很难找的东西","d":"垃圾桶","correct":"不会用完的自然能源"},{"q":"哪种东西不是来自大自然的能源？","a":"太阳","b":"风","c":"塑料袋","d":"运行的水","correct":"塑料袋"},{"q":"太阳能板（Solar Panel）是用来做什么的？","a":"收集阳光发电","b":"挡雨","c":"煮饭","d":"照镜子","correct":"收集阳光发电"},{"q":"水力发电是利用什么来发电？","a":"泥土","b":"流动的水","c":"木头","d":"石头","correct":"流动的水"},{"q":"为什么我们要节约用电？","a":"为了好玩","b":"为了保护地球","c":"为了浪费钱","d":"为了让天变黑","correct":"为了保护地球"},{"q":"如果我们一直浪费石油，石油会怎样？","a":"越来越多","b":"会用完","c":"变成水","d":"不会变","correct":"会用完"},{"q":"哪种能源是比较干净、不污染空气的？","a":"黑烟","b":"煤炭","c":"太阳能","d":"废气","correct":"太阳能"},{"q":"大风车（风力发电机）通常建在什么地方？","a":"房间里","b":"风很大的地方","c":"地洞里","d":"电影院","correct":"风很大的地方"},{"q":"植物和动物的废料可以变成能源吗？","a":"可以","b":"不可以","c":"不知道","d":"没可能","correct":"可以"},{"q":"为了让空气更清新，我们应该支持什么？","a":"烧垃圾","b":"种树和用绿能源","c":"排黑烟","d":"砍树","correct":"种树和用绿能源"},{"q":"地球的深处其实是很热的，对吗？","a":"对","b":"不对","c":"很冷","d":"像冰块","correct":"对"}];
+    
+    // ==================== 密码系统 (原样保留) ====================
+    let passwordUnlocked = false, remainingAttempts = 5, isWaiting = false, waitTimeout = null, pendingModalId = null, globalLocked = false;
+    let currentPassword = localStorage.getItem('zootopia_admin_pwd') || "0987";
+    function savePasswordToLocal(pwd) { localStorage.setItem('zootopia_admin_pwd', pwd); currentPassword = pwd; }
+    function processWrongPassword() { if(globalLocked) return; remainingAttempts--; updateAttemptsDisplay(); if(remainingAttempts <= 0) permanentLock(); else startWaitPenalty(5);}
+    function startWaitPenalty(seconds) { if(isWaiting) return; isWaiting=true; let remain=seconds; const updateTimer=()=>{ const span=document.getElementById('wait-timer'); if(span) span.innerText = `⏳ 等待 ${remain}s`; if(remain<=0) clearWaitState(); else { waitTimeout=setTimeout(()=>{ remain--; updateTimer(); },1000); } }; updateTimer();}
+    function clearWaitState() { if(waitTimeout) clearTimeout(waitTimeout); waitTimeout=null; isWaiting=false; const w=document.getElementById('wait-timer'); if(w) w.innerText=''; document.getElementById('confirm-pwd-btn').disabled=false; document.getElementById('password-input').disabled=false; document.getElementById('confirm-change-btn').disabled=false; }
+    function updateAttemptsDisplay() { const a=document.getElementById('attempts-left'); if(a) a.innerText=`剩余次数: ${remainingAttempts}`; if(remainingAttempts<=0) permanentLock();}
+    function permanentLock() { if(globalLocked) return; globalLocked=true; passwordUnlocked=false; document.getElementById('global-lock').style.display='flex'; ['timeBtn','quizBtn','changePwdBtn','generateHtmlBtn','startBtn','resetBtn'].forEach(id=>{ const btn=document.getElementById(id); if(btn) btn.disabled=true; });}
+    function verifyPasswordAndUnlock(inputPwd, onSuccess) { if(globalLocked) return false; if(isWaiting){ alert("等待惩罚结束"); return false; } if(inputPwd===currentPassword){ remainingAttempts=5; updateAttemptsDisplay(); passwordUnlocked=true; clearWaitState(); if(onSuccess) onSuccess(); return true;} else { processWrongPassword(); return false; }}
+    function showPasswordModal(modalId){ if(globalLocked) return; pendingModalId=modalId; document.getElementById('password-modal').style.display='flex'; document.getElementById('password-input').value='';}
+    function closePasswordModal(){ document.getElementById('password-modal').style.display='none'; pendingModalId=null;}
+    function handlePasswordConfirm(){ const entered=document.getElementById('password-input').value; verifyPasswordAndUnlock(entered,()=>{ document.getElementById('password-modal').style.display='none'; if(pendingModalId){ document.getElementById(pendingModalId).style.display='flex'; pendingModalId=null; }});}
+    function openChangePwdModal(){ if(globalLocked) return; if(!passwordUnlocked){ showPasswordModal('change-pwd-modal'); return;} document.getElementById('change-pwd-modal').style.display='flex';}
+    function closeChangePwdModal(){ document.getElementById('change-pwd-modal').style.display='none';}
+    function handleChangePassword(){ if(globalLocked) return; if(isWaiting){ alert("请等待"); return;} const cur=document.getElementById('current-pwd').value, newp=document.getElementById('new-pwd').value, conf=document.getElementById('confirm-pwd').value; if(cur!==currentPassword){ processWrongPassword(); alert("当前密码错误"); return;} if(!newp||newp.length<4){ alert("新密码至少4位"); return;} if(newp!==conf){ alert("不一致"); return;} savePasswordToLocal(newp); alert("修改成功"); closeChangePwdModal(); passwordUnlocked=true;}
+    document.getElementById('confirm-pwd-btn').onclick=handlePasswordConfirm;
+    document.getElementById('cancel-pwd-btn').onclick=closePasswordModal;
+    document.getElementById('toggle-password').onclick=()=>{ let inp=document.getElementById('password-input'); inp.type=inp.type==='password'?'text':'password'; };
+    document.getElementById('toggle-current').onclick=()=>{ let inp=document.getElementById('current-pwd'); inp.type=inp.type==='password'?'text':'password'; };
+    document.getElementById('toggle-new').onclick=()=>{ let inp=document.getElementById('new-pwd'); inp.type=inp.type==='password'?'text':'password'; };
+    document.getElementById('toggle-confirm').onclick=()=>{ let inp=document.getElementById('confirm-pwd'); inp.type=inp.type==='password'?'text':'password'; };
+    document.getElementById('confirm-change-btn').onclick=handleChangePassword;
+    document.getElementById('cancel-change-btn').onclick=closeChangePwdModal;
+    document.getElementById('changePwdBtn').onclick=openChangePwdModal;
+    document.getElementById('timeBtn').onclick=()=>{ if(globalLocked) return; if(passwordUnlocked) document.getElementById('time-modal').style.display='flex'; else showPasswordModal('time-modal'); };
+    document.getElementById('quizBtn').onclick=()=>{ if(globalLocked) return; if(passwordUnlocked){ document.getElementById('ques-modal').style.display='flex'; refreshTableDisplay();} else showPasswordModal('ques-modal'); };
+    
+    // ==================== 时长管理 ====================
+    const timeInput = document.getElementById('setup-time');
+    function loadSavedTime() {
+        const saved = localStorage.getItem('zootopia_game_duration');
+        let defaultVal = 240;
+        if(saved) { let parsed = parseInt(saved); if(!isNaN(parsed) && parsed>=10 && parsed<=600) defaultVal=parsed; }
+        timeInput.value = defaultVal;
+        if(gameState && !gameState.active) { gameState.maxTime = defaultVal; gameState.timeLeft = defaultVal; updateTimerDisplay(); }
+    }
+    document.getElementById('saveTimeBtn').onclick = () => {
+        let val = parseInt(timeInput.value); if(isNaN(val)) val=240;
+        val = Math.min(600, Math.max(10, val));
+        timeInput.value = val;
+        localStorage.setItem('zootopia_game_duration', val);
+        if(gameState && !gameState.active) { gameState.maxTime = val; gameState.timeLeft = val; updateTimerDisplay(); }
+        document.getElementById('time-modal').style.display = 'none';
+        alert(`时长已设为 ${val} 秒${val===240 ? ' (4分钟)' : ''}`);
+    };
+    
+    // ==================== 游戏状态 ====================
+    let gameState = { pool: [], team1Remaining: [], team2Remaining: [], score1:0, score2:0, timeLeft:240, maxTime:240, active:false, ropePos:0, timerInterval:null, gameLog:{team1:[],team2:[]}, pendingTimeouts:[] };
+    
+    const domGame = {
+        timer: document.getElementById('timer'), q1: document.getElementById('q1'), q2: document.getElementById('q2'),
+        o1: document.getElementById('opts1'), o2: document.getElementById('opts2'), rope: document.getElementById('rope-move-container'),
+        gameOver: document.getElementById('game-over'), winText: document.getElementById('winner-text'), finalRes: document.getElementById('final-stats'),
+        score1: document.getElementById('score1'), score2: document.getElementById('score2'),
+        charJudy: document.getElementById('char-blue'), charNick: document.getElementById('char-red'),
+        tableBody: document.getElementById('questions-table-body'), judyReport: document.getElementById('judy-report'), nickReport: document.getElementById('nick-report'),
+        downloadBtn: document.getElementById('downloadPdfBtn'), playAgainBtn: document.getElementById('playAgainBtn')
+    };
+    function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+    
+    // ==================== 题库表格操作 (强化数据清洗) ====================
+    function addQuestionRow(prefill = null){
+        const row = document.createElement('tr'); row.className = 'border-b';
+        const vals = prefill || { q: '', a: '', b: '', c: '', d: '', correct: '' };
+        row.innerHTML = `<td class="p-2"><input type="text" value="${escapeHtml(vals.q)}" class="question-input w-full"></td>
+                         <td class="p-2"><input type="text" value="${escapeHtml(vals.a)}" class="opt-a w-full"></td>
+                         <td class="p-2"><input type="text" value="${escapeHtml(vals.b)}" class="opt-b w-full"></td>
+                         <td class="p-2"><input type="text" value="${escapeHtml(vals.c)}" class="opt-c w-full"></td>
+                         <td class="p-2"><input type="text" value="${escapeHtml(vals.d)}" class="opt-d w-full"></td>
+                         <td class="p-2"><select class="correct-select w-full"></select></td>
+                         <td class="p-2 text-center"><button class="del-row text-red-400 font-bold text-lg">🗑️</button></td>`;
+        domGame.tableBody.appendChild(row);
+        const select = row.querySelector('.correct-select');
+        const inps = [row.querySelector('.opt-a'), row.querySelector('.opt-b'), row.querySelector('.opt-c'), row.querySelector('.opt-d')];
+        const updateSelect = () => {
+            const current = select.value;
+            // 规范化选项文本后放入下拉框
+            const opts = inps.map(inp => normalizeText(inp.value));
+            select.innerHTML = opts.map((opt, idx) => `<option value="${escapeHtml(opt)}">${String.fromCharCode(65+idx)}: ${escapeHtml(opt)}</option>`).join('');
+            if(opts.includes(current)) select.value = current;
+            else if(opts.includes(normalizeText(vals.correct))) select.value = normalizeText(vals.correct);
+        };
+        inps.forEach(i=>i.addEventListener('input', updateSelect));
+        updateSelect();
+        row.querySelector('.del-row').onclick = ()=>row.remove();
+        return row;
+    }
+    function resetDefaultTable(){ domGame.tableBody.innerHTML=''; DEFAULT_QUESTIONS.forEach(q=> addQuestionRow({q:q.q, a:q.a, b:q.b, c:q.c, d:q.d, correct:q.correct})); }
+    function collectTableData(){ 
+        return Array.from(domGame.tableBody.querySelectorAll('tr')).map(row=>{
+            let opts = [
+                normalizeText(row.querySelector('.opt-a').value),
+                normalizeText(row.querySelector('.opt-b').value),
+                normalizeText(row.querySelector('.opt-c').value),
+                normalizeText(row.querySelector('.opt-d').value)
+            ];
+            return {
+                q: normalizeText(row.querySelector('.question-input').value),
+                options: opts,
+                correct: normalizeText(row.querySelector('.correct-select').value)
+            };
+        }).filter(q=>q.q && q.options.every(o=>o));
+    }
+    function refreshTableDisplay(){ if(domGame.tableBody.children.length===0) resetDefaultTable(); }
+    function saveTableAndClose(){ gameState.pool = collectTableData(); if(gameState.pool.length===0){ resetDefaultTable(); gameState.pool=collectTableData(); } document.getElementById('ques-modal').style.display='none'; alert("题库已保存 (已自动清理空格和不可见字符)"); }
+    document.getElementById('saveQuesBtn').onclick = saveTableAndClose;
+    document.getElementById('addRowBtn').onclick = ()=>addQuestionRow();
+    document.getElementById('resetTableBtn').onclick = resetDefaultTable;
+    document.getElementById('batchOpenBtn').onclick = ()=>document.getElementById('batch-panel').classList.remove('hidden');
+    document.getElementById('closeBatchBtn').onclick = ()=>document.getElementById('batch-panel').classList.add('hidden');
+    document.getElementById('clearBatchBtn').onclick = ()=>document.getElementById('batch-text').value='';
+    document.getElementById('importBatchBtn').onclick = ()=>{
+        const raw = document.getElementById('batch-text').value;
+        if(!raw.trim()) return alert("粘贴数据");
+        const lines = raw.split(/\r?\n/);
+        let added=0;
+        for(let line of lines){
+            line=line.trim(); if(!line) continue;
+            let parts=line.split('|').map(s=>s.trim());
+            if(parts.length<6){ alert(`字段不足: ${line}`); continue; }
+            let [q,a,b,c,d,correct] = parts;
+            if(!q||!a||!b||!c||!d||!correct) continue;
+            if(![a,b,c,d].includes(correct)){ alert(`正确选项错误: ${correct}`); continue; }
+            addQuestionRow({q,a,b,c,d,correct});
+            added++;
+        }
+        alert(`批量添加 ${added} 题 (已自动规范化)`);
+        document.getElementById('batch-text').value='';
+        document.getElementById('batch-panel').classList.add('hidden');
+    };
+    
+    // ==================== 拔河游戏核心 ====================
+    const PULL_STEP=22, MAX_SHIFT=150;
+    function clearAllTimeouts(){ gameState.pendingTimeouts.forEach(id=>clearTimeout(id)); gameState.pendingTimeouts=[]; }
+    function addTimeout(fn,delay){ const id=setTimeout(()=>{ fn(); gameState.pendingTimeouts=gameState.pendingTimeouts.filter(t=>t!==id); },delay); gameState.pendingTimeouts.push(id); return id; }
+    function updateScoresAndRope(){ domGame.score1.textContent=gameState.score1; domGame.score2.textContent=gameState.score2; gameState.ropePos=Math.max(-MAX_SHIFT,Math.min(MAX_SHIFT,gameState.ropePos)); domGame.rope.style.transform=`translateX(${gameState.ropePos}px)`; if(gameState.active && Math.abs(gameState.ropePos)>=MAX_SHIFT) endGame(); }
+    function formatTime(sec){ return `${Math.floor(sec/60).toString().padStart(2,'0')}:${(sec%60).toString().padStart(2,'0')}`; }
+    function updateTimerDisplay(){ domGame.timer.textContent=formatTime(gameState.timeLeft); }
+    function animatePull(el){ el.classList.remove('idle-float'); el.classList.add('pull-anim'); addTimeout(()=>{ if(el){ el.classList.remove('pull-anim'); el.classList.add('idle-float'); } },400); }
+    function takeRandomQuestion(team) { const remaining=team===1?gameState.team1Remaining:gameState.team2Remaining; if(!remaining.length) return null; const idx=Math.floor(Math.random()*remaining.length); const q=remaining[idx]; remaining.splice(idx,1); return q; }
+    function renderQuestion(team){
+        if(!gameState.active) return;
+        const item=takeRandomQuestion(team);
+        if(!item){ const qBox=team===1?domGame.q1:domGame.q2; qBox.textContent=team===1?"🐰 朱迪已完成所有题目":"🦊 尼克已完成所有题目"; (team===1?domGame.o1:domGame.o2).innerHTML='<div class="text-center p-4">✨ 已答完 ✨</div>'; if(gameState.active && gameState.team1Remaining.length===0 && gameState.team2Remaining.length===0) endGame(); return; }
+        const qBox=team===1?domGame.q1:domGame.q2, optsBox=team===1?domGame.o1:domGame.o2;
+        qBox.textContent=item.q; optsBox.innerHTML='';
+        // 随机打乱选项，保留原始文本（已经规范化）
+        const shuffled = [...item.options].sort(()=>Math.random()-0.5);
+        shuffled.forEach(opt=>{ 
+            const btn=document.createElement('button'); 
+            btn.className='choice-btn w-full p-3.5 rounded-2xl font-bold text-sm bg-white border-b-4 border-slate-200 hover:bg-slate-50'; 
+            btn.textContent=opt; 
+            btn.onclick=()=>handleAnswer(team, opt, item.correct, btn, item.q); 
+            optsBox.appendChild(btn); 
+        });
+    }
+    // 核心判题函数 - 使用规范化比较
+    function handleAnswer(team, selectedOpt, correctAnswer, btn, questionText){
+        if(!gameState.active) return;
+        const optsBox=team===1?domGame.o1:domGame.o2;
+        optsBox.querySelectorAll('button').forEach(b=>b.disabled=true);
+        
+        const isCorrect = isAnswerEqual(selectedOpt, correctAnswer);
+        
+        // 控制台输出详细比较日志（方便检查）
+        console.group(`📌 判题详情 - ${team===1?'朱迪':'尼克'}`);
+        console.log(`题目: ${questionText}`);
+        console.log(`用户点击: "${selectedOpt}" → 规范化: "${normalizeText(selectedOpt)}"`);
+        console.log(`正确答案: "${correctAnswer}" → 规范化: "${normalizeText(correctAnswer)}"`);
+        console.log(`判题结果: ${isCorrect ? '✅ 正确' : '❌ 错误'}`);
+        console.groupEnd();
+        
+        gameState.gameLog[team===1?'team1':'team2'].push({
+            question: questionText,
+            userAnswer: selectedOpt,
+            correctAnswer: correctAnswer,
+            isCorrect: isCorrect
+        });
+        
+        if(isCorrect){
+            btn.className=`choice-btn w-full p-3.5 rounded-2xl font-bold text-sm text-white border-b-4 ${team===1?'bg-blue-500 border-blue-700':'bg-orange-500 border-orange-700'}`;
+            if(team===1){ gameState.score1+=10; gameState.ropePos-=PULL_STEP; animatePull(domGame.charJudy); } 
+            else { gameState.score2+=10; gameState.ropePos+=PULL_STEP; animatePull(domGame.charNick); }
+            updateScoresAndRope(); 
+            addTimeout(()=>renderQuestion(team),500);
+        } else {
+            btn.className='choice-btn w-full p-3.5 rounded-2xl font-bold text-sm text-white bg-red-500 border-red-700';
+            // 找出正确的选项按钮并高亮绿色
+            const correctBtn = Array.from(optsBox.querySelectorAll('button')).find(b => isAnswerEqual(b.textContent, correctAnswer));
+            if(correctBtn) correctBtn.className='choice-btn w-full p-3.5 rounded-2xl font-bold text-sm text-white bg-green-500 border-green-700 pull-anim';
+            addTimeout(()=>renderQuestion(team),1500);
+        }
+        addTimeout(()=>{ if(gameState.active && gameState.team1Remaining.length===0 && gameState.team2Remaining.length===0) endGame(); },100);
+    }
+    
+    function disableAdminButtons(disabled){ ['timeBtn','quizBtn','changePwdBtn','generateHtmlBtn'].forEach(id=>{ const btn=document.getElementById(id); if(btn) disabled?btn.classList.add('disabled-btn'):btn.classList.remove('disabled-btn'); }); }
+    function endGame(){
+        if(!gameState.active) return;
+        gameState.active=false; clearInterval(gameState.timerInterval); clearAllTimeouts(); disableAdminButtons(false);
+        const winner=gameState.ropePos<0?'JUDY':(gameState.ropePos>0?'NICK':'DRAW');
+        domGame.winText.textContent=winner==='DRAW'?'🤝 平局！':(winner==='JUDY'?'🐰 朱迪胜利！':'🦊 尼克胜利！');
+        domGame.finalRes.textContent=`${gameState.score1} : ${gameState.score2}`;
+        const renderReport = (teamKey, container) => {
+            const logs = gameState.gameLog[teamKey];
+            if(!logs.length){ container.innerHTML='<p class="text-center text-slate-400">无记录</p>'; return; }
+            container.innerHTML = '';
+            logs.forEach((log, idx) => {
+                const div = document.createElement('div');
+                div.className = `p-3 rounded-xl mb-2 text-xs border-l-4 ${log.isCorrect ? 'bg-green-100 border-green-500' : 'bg-red-100 border-red-500'}`;
+                div.innerHTML = `<p class="font-bold">${idx+1}. ${escapeHtml(log.question)}</p>
+                                 <p>你的答案: ${escapeHtml(log.userAnswer)} ${log.isCorrect ? '✓' : '✗'}</p>
+                                 ${!log.isCorrect ? `<p class="text-slate-500">正确答案: ${escapeHtml(log.correctAnswer)}</p>` : ''}`;
+                container.appendChild(div);
+            });
+        };
+        renderReport('team1', domGame.judyReport);
+        renderReport('team2', domGame.nickReport);
+        domGame.gameOver.classList.remove('hidden');
+        domGame.playAgainBtn.disabled=true; domGame.playAgainBtn.classList.add('opacity-50','cursor-not-allowed');
+        domGame.downloadBtn.onclick = downloadPDFReport;
+    }
+    
+    async function downloadPDFReport() {
+        const winnerText = domGame.winText.innerText;
+        const scoreText = domGame.finalRes.innerText;
+        const judyContainer = document.getElementById('judy-report');
+        const nickContainer = document.getElementById('nick-report');
+        const judyClone = judyContainer.cloneNode(true);
+        const nickClone = nickContainer.cloneNode(true);
+        judyClone.style.maxHeight = 'none';
+        judyClone.style.overflow = 'visible';
+        nickClone.style.maxHeight = 'none';
+        nickClone.style.overflow = 'visible';
+        
+        const container = document.createElement('div');
+        container.style.fontFamily = "'Inter', sans-serif";
+        container.style.padding = '2rem';
+        container.style.backgroundColor = 'white';
+        container.style.maxWidth = '1000px';
+        container.style.margin = '0 auto';
+        
+        const headerDiv = document.createElement('div');
+        headerDiv.style.textAlign = 'center';
+        headerDiv.style.marginBottom = '2rem';
+        headerDiv.innerHTML = `
+            <h1 style="font-size:2.5rem; font-weight:900;">🐰 vs 🦊 拔河战报</h1>
+            <p style="color:#475569;">${new Date().toLocaleString()}</p>
+            <div style="background:#f1f5f9; display:inline-block; padding:0.5rem 1.5rem; border-radius:60px; margin-top:0.6rem;">
+                <span style="font-weight:900;">🏆 ${winnerText} ${scoreText}</span>
+            </div>
+        `;
+        container.appendChild(headerDiv);
+        
+        const flexRow = document.createElement('div');
+        flexRow.style.display = 'flex';
+        flexRow.style.flexWrap = 'wrap';
+        flexRow.style.gap = '1.5rem';
+        flexRow.style.justifyContent = 'center';
+        
+        const judyCard = document.createElement('div');
+        judyCard.style.flex = '1';
+        judyCard.style.minWidth = '280px';
+        judyCard.style.backgroundColor = '#eff6ff';
+        judyCard.style.borderRadius = '24px';
+        judyCard.style.padding = '1rem';
+        judyCard.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+        const judyTitle = document.createElement('h4');
+        judyTitle.style.fontWeight = '900';
+        judyTitle.style.color = '#1e3a8a';
+        judyTitle.style.fontSize = '1.25rem';
+        judyTitle.style.marginBottom = '0.75rem';
+        judyTitle.innerHTML = '🐰 朱迪的答题卡';
+        judyCard.appendChild(judyTitle);
+        judyCard.appendChild(judyClone);
+        
+        const nickCard = document.createElement('div');
+        nickCard.style.flex = '1';
+        nickCard.style.minWidth = '280px';
+        nickCard.style.backgroundColor = '#fff7ed';
+        nickCard.style.borderRadius = '24px';
+        nickCard.style.padding = '1rem';
+        nickCard.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+        const nickTitle = document.createElement('h4');
+        nickTitle.style.fontWeight = '900';
+        nickTitle.style.color = '#c2410c';
+        nickTitle.style.fontSize = '1.25rem';
+        nickTitle.style.marginBottom = '0.75rem';
+        nickTitle.innerHTML = '🦊 尼克的答题卡';
+        nickCard.appendChild(nickTitle);
+        nickCard.appendChild(nickClone);
+        
+        flexRow.appendChild(judyCard);
+        flexRow.appendChild(nickCard);
+        container.appendChild(flexRow);
+        
+        document.body.appendChild(container);
+        try {
+            await html2pdf().set({
+                margin: [0.5, 0.5, 0.5, 0.5],
+                filename: `拔河战报_${Date.now()}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, backgroundColor: '#ffffff' },
+                jsPDF: { unit: 'in', format: 'a4' }
+            }).from(container).save();
+            domGame.playAgainBtn.disabled = false;
+            domGame.playAgainBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            alert("PDF已保存，可再次游戏");
+        } catch(e) {
+            alert("生成失败: " + e);
+        } finally {
+            document.body.removeChild(container);
+        }
+    }
+    
+    function applyAndStart(){
+        if(globalLocked) return;
+        if(gameState.active) resetGame(true);
+        clearAllTimeouts(); if(gameState.timerInterval) clearInterval(gameState.timerInterval);
+        let currentMax = parseInt(timeInput.value);
+        if(isNaN(currentMax)) currentMax = 240;
+        currentMax = Math.min(600, Math.max(10, currentMax));
+        gameState.maxTime = currentMax;
+        gameState.timeLeft = currentMax;
+        if(!gameState.pool.length){ resetDefaultTable(); gameState.pool=collectTableData(); }
+        if(gameState.pool.length===0){ alert("题库为空"); return; }
+        // 确保每个question的correct存在于options中
+        for(let q of gameState.pool) if(!q.options.includes(q.correct)) q.correct=q.options[0];
+        gameState.team1Remaining=gameState.pool.map(q=>({...q, options:[...q.options]}));
+        gameState.team2Remaining=gameState.pool.map(q=>({...q, options:[...q.options]}));
+        gameState.score1=0; gameState.score2=0; gameState.ropePos=0; gameState.gameLog={team1:[],team2:[]};
+        gameState.active=true;
+        domGame.gameOver.classList.add('hidden'); updateScoresAndRope(); updateTimerDisplay();
+        disableAdminButtons(true);
+        renderQuestion(1); renderQuestion(2);
+        gameState.timerInterval=setInterval(()=>{ if(!gameState.active) return; gameState.timeLeft--; updateTimerDisplay(); if(gameState.timeLeft<=0){ clearInterval(gameState.timerInterval); endGame(); } },1000);
+    }
+    function resetGame(){ if(globalLocked) return; gameState.active=false; clearInterval(gameState.timerInterval); clearAllTimeouts(); disableAdminButtons(false); domGame.gameOver.classList.add('hidden'); domGame.score1.textContent='0'; domGame.score2.textContent='0'; domGame.q1.textContent="🐾 准备好了吗？"; domGame.q2.textContent="🦊 来吧！"; domGame.o1.innerHTML=''; domGame.o2.innerHTML=''; domGame.rope.style.transform='translateX(0)'; gameState.score1=0; gameState.score2=0; gameState.ropePos=0; gameState.timeLeft=gameState.maxTime; gameState.gameLog={team1:[],team2:[]}; updateTimerDisplay(); if(gameState.pool.length){ gameState.team1Remaining=gameState.pool.map(q=>({...q, options:[...q.options]})); gameState.team2Remaining=gameState.pool.map(q=>({...q, options:[...q.options]})); } }
+    document.getElementById('startBtn').onclick = applyAndStart;
+    document.getElementById('resetBtn').onclick = resetGame;
+    domGame.playAgainBtn.onclick = () => { if(!domGame.playAgainBtn.disabled) resetGame(); else alert("请先下载战报PDF"); };
+    function generateStandaloneHTML(){
+        const qs=collectTableData(); if(qs.length===0){ alert("题库空"); return;}
+        let t=parseInt(timeInput.value); if(isNaN(t)) t=240;
+        alert("生成独立HTML文件 (智能判题版)");
+        let htmlSnapshot=document.documentElement.outerHTML;
+        const newQs=JSON.stringify(qs.map(q=>({q:q.q, a:q.options[0], b:q.options[1], c:q.options[2], d:q.options[3], correct:q.correct})));
+        htmlSnapshot=htmlSnapshot.replace(/const DEFAULT_QUESTIONS = \[[\s\S]*?\];/, `const DEFAULT_QUESTIONS = ${newQs};`);
+        htmlSnapshot=htmlSnapshot.replace(/(<input id="setup-time" value=")\d+(")/, `$1${t}$2`);
+        const blob=new Blob([htmlSnapshot],{type:'text/html'}); const a=document.createElement('a'); a.download=`zootopia_tug_${Date.now()}.html`; a.href=URL.createObjectURL(blob); a.click(); URL.revokeObjectURL(a.href);
+    }
+    document.getElementById('generateHtmlBtn').onclick = () => { if(globalLocked) return; generateStandaloneHTML(); };
+    function initGame(){ loadSavedTime(); resetDefaultTable(); gameState.pool=collectTableData(); gameState.team1Remaining=[...gameState.pool]; gameState.team2Remaining=[...gameState.pool]; domGame.gameOver.classList.add('hidden'); updateTimerDisplay(); }
+    initGame();
+})();
+</script>
+
+</body></html>
